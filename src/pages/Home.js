@@ -17,20 +17,20 @@ export default function Home() {
     setLoading(true);
     setError(null);
 
-    api.getUsers()
-      .then((data) => {
+    (async () => {
+      try {
+        const data = await api.getUsers();
         if (!mounted) return;
         setUsers(Array.isArray(data) ? data : []);
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!mounted) return;
         setError(err?.message || "Failed to load users");
         setUsers([]);
-      })
-      .finally(() => {
+      } finally {
         if (!mounted) return;
         setLoading(false);
-      });
+      }
+    })();
 
     return () => {
       mounted = false;
@@ -42,10 +42,14 @@ export default function Home() {
     try {
       const newUser = await api.createUser(data);
       // If API doesn't return an id, generate a local one so we can reference it later
-      if (!newUser || newUser.id === undefined || newUser.id === null) {
-        newUser.id = `local-${Date.now()}`;
-      }
-      setUsers((prev) => [newUser, ...(prev || [])]);
+      const safeUser = newUser && (newUser.id !== undefined && newUser.id !== null)
+        ? newUser
+        : { ...data, id: `local-${Date.now()}` };
+
+      // ensure we don't mutate API object unexpectedly
+      const toAdd = { ...safeUser };
+
+      setUsers((prev) => [toAdd, ...(prev || [])]);
       toast.success("User created (simulated).");
     } catch (err) {
       toast.error("Failed to create user: " + (err?.message || err));
@@ -57,16 +61,13 @@ export default function Home() {
   async function updateUser(id, data) {
     try {
       const updated = await api.updateUser(id, data);
-      if (!updated) {
-        throw new Error("No response from API");
-      }
+      if (!updated) throw new Error("No response from API");
       setUsers((prev) => (prev || []).map((u) => (String(u.id) === String(id) ? updated : u)));
       setEditUser(null);
       toast.success("User updated (simulated).");
     } catch (err) {
-      toast.warn(
-        "Unable to update on remote API — changes applied locally."
-      );
+      // Inform user but apply update locally
+      toast.warn("Unable to update on remote API — changes applied locally.");
       setUsers((prev) =>
         (prev || []).map((u) => (String(u.id) === String(id) ? { ...u, ...data } : u))
       );
@@ -76,9 +77,8 @@ export default function Home() {
 
   // Delete user (DELETE). If API call fails, still remove from UI (simulated delete).
   async function deleteUser(id) {
-    if (!window.confirm("Delete this user? This action is simulated and will remove it from view.")) {
-      return;
-    }
+    const ok = window.confirm("Delete this user? This action is simulated and will remove it from view.");
+    if (!ok) return;
 
     try {
       await api.deleteUser(id);
@@ -93,25 +93,38 @@ export default function Home() {
   if (loading) return <p className="muted">Loading users…</p>;
 
   return (
-    <div>
-      <section style={{ marginBottom: 16 }} className="panel-card">
+    <div className="container">
+      <h2 style={{ marginBottom: 12 }}>User Manager</h2>
+
+      <section className="panel-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <h2 style={{ margin: 0, fontSize: 18 }}>User Manager</h2>
-          <div>
-            <button className="button btn-muted" onClick={() => window.location.reload()}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <button
+              type="button"
+              className="button btn-muted"
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+                // re-fetch
+                api.getUsers()
+                  .then((data) => setUsers(Array.isArray(data) ? data : []))
+                  .catch((e) => setError(e?.message || "Failed to load users"))
+                  .finally(() => setLoading(false));
+              }}
+              aria-label="Refresh users"
+            >
               Refresh
             </button>
           </div>
+          {error ? (
+            <div style={{ textAlign: "right" }}>
+              <div className="error" style={{ marginBottom: 6 }}>Error loading users</div>
+              <div className="muted">You can still create, edit and delete users locally.</div>
+            </div>
+          ) : null}
         </div>
 
-        {error && (
-          <div style={{ marginBottom: 12 }} className="panel-card">
-            <p className="error">Error loading users: {error}</p>
-            <p className="muted">You can still create, edit and delete users locally; API operations are simulated.</p>
-          </div>
-        )}
-
-        <div className="grid-two" style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 18 }}>
+        <div className="grid-two">
           {/* Left: create / edit form */}
           <div className="panel-card">
             <UserForm
@@ -122,7 +135,7 @@ export default function Home() {
           </div>
 
           {/* Right: user list */}
-          <div className="panel-card table-wrap">
+          <div className="panel-card table-wrap" aria-live="polite">
             <table className="user-table" role="table" aria-label="Users list">
               <thead>
                 <tr>
@@ -159,6 +172,7 @@ export default function Home() {
                       <div className="actions" style={{ justifyContent: "flex-end" }}>
                         {/* Edit button (pencil icon) */}
                         <button
+                          type="button"
                           className="button btn-primary"
                           title="Edit"
                           onClick={() => setEditUser(u)}
@@ -173,6 +187,7 @@ export default function Home() {
 
                         {/* Delete button (trash icon) */}
                         <button
+                          type="button"
                           className="button btn-danger"
                           title="Delete"
                           onClick={() => deleteUser(u.id)}
