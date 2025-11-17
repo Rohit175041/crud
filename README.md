@@ -1,10 +1,10 @@
+```
 crud/
-│
-├── public/
+│── public/
 │   ├── index.html
 │   └── favicon.ico
 │
-├── src/
+│── src/
 │   ├── api/
 │   │   └── api.js
 │   │
@@ -25,35 +25,58 @@ crud/
 │   ├── App.js
 │   └── index.js
 │
-├── .env
+└── .env
+```
 
-# CRUD React - User Manager
+# 🚀 CRUD React – User Manager
 
-Lightweight React app to manage users (Create, Read, Update, Delete). Data is stored in-browser using `localStorage` so there is no backend required to try the app.
+A fully responsive **React.js User Management Application** implementing complete **CRUD operations**:
 
-## Project structure (key files)
+- **Create** new users  
+- **Read** user list & details  
+- **Update** existing users  
+- **Delete** users  
 
-- `public/` – static assets and `index.html`
-- `src/`
-	- `components/UserForm.js` – form to create / edit users
-	- `components/UserList.js` – list of users with Edit/Delete actions
-	- `App.js` – application root and CRUD state management (persists to `localStorage`)
-	- `App.css` – basic styling for the UI
-	- `index.js` – React entry
+The project includes:
 
-## Features
+- React Hooks (useState, useEffect)  
+- React Router  
+- Toast Notifications (react-toastify)  
+- Responsive CSS (mobile + desktop)  
+- JSONPlaceholder mock API  
+- Graceful error handling  
 
-- Add new users (name, email)
-- Edit existing users
-- Delete users (with confirmation)
-- Data persisted across reloads using `localStorage`
+This app does not require a real backend — JSONPlaceholder simulates API responses, and UI state keeps local changes.
 
-## Quick start (PowerShell)
+---
 
+## 🌐 Live Demo  
+👉 **Live Link:** https://crud-fetb.onrender.com
+---
+
+## ⚙️ Installation
+
+```bash
 npm install
 npm start
 ```
 
-Open http://localhost:3000 in your browser. The dev server runs with `react-scripts` and supports hot reload.
+Runs on:  
+👉 http://localhost:3000
+
+---
+
+## 🧪 API  
+Using: https://jsonplaceholder.typicode.com/users  
+
+---
+
+## 📱 Responsive UI  
+- Table view on desktop  
+- Card layout on mobile  
+- Touch-friendly buttons  
+- Modern clean design
+
+---
 
 
